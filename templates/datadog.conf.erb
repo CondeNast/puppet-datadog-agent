@@ -352,3 +352,7 @@ syslog_port: <%= @syslog_port  %>
 # ========================================================================== #
 
 <% end -%>
+
+<% if @process_agent_enabled -%>
+process_agent_enabled: <%= @process_agent_enabled %>
+<% end -%>

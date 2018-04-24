@@ -154,6 +154,9 @@
 #   $pup_log_file
 #       Specifies the log file location for the pup system
 #       String. Default: empty
+#   $process_agent_enabled
+#       Boolean to enable the process/container agent
+#       Boolean. Default: false
 #
 #
 # Actions:
@@ -229,6 +232,7 @@ class datadog_agent(
   $pup_log_file = '',
   $syslog_host  = '',
   $syslog_port  = '',
+  $process_agent_enabled = false,
 ) inherits datadog_agent::params {
 
   validate_string($dd_url)
@@ -281,6 +285,7 @@ class datadog_agent(
   validate_string($pup_log_file)
   validate_string($syslog_host)
   validate_string($syslog_port)
+  validate_bool($process_agent_enabled)
 
   if $hiera_tags {
     $local_tags = hiera_array('datadog_agent::tags')
