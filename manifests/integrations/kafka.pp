@@ -54,16 +54,16 @@
 #
 class datadog_agent::integrations::kafka(
   $host = 'localhost',
-  Variant[String[1], Integer] $port = 9999,
-  Optional[String[1]] $username = undef,
-  Optional[String[1]] $password = undef,
-  Optional[String[1]] $process_name_regex = undef,
-  Optional[String[1]] $tools_jar_path = undef,
-  Optional[String[1]] $java_bin_path = undef,
-  Optional[String[1]] $trust_store_path = undef,
-  Optional[String[1]] $trust_store_password = undef,
-  Optional[Hash[String[1], String[1]]] $tags = undef,
-  Optional[Array[Hash[String[1], Data]]] $instances = undef,
+  $port = 9999,
+  $username = undef,
+  $password = undef,
+  $process_name_regex = undef,
+  $tools_jar_path = undef,
+  $java_bin_path = undef,
+  $trust_store_path = undef,
+  $trust_store_password = undef,
+  $tags = undef,
+  $instances = undef,
 ) inherits datadog_agent::params {
   include datadog_agent
 
