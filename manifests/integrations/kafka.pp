@@ -1,4 +1,4 @@
-class: datadog_agent::integrations::kafka
+#class::datadog_agent::integrations::kafka
 #
 # This class will install the necessary configuration for the kafka integration
 #
