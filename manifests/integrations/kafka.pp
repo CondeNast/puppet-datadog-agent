@@ -1,92 +1,41 @@
-#class::datadog_agent::integrations::kafka
+# Class: datadog_agent::integrations::kafka
 #
-# This class will install the necessary configuration for the kafka integration
+# This class will install the necessary configuration for the kafka
+# integration
 #
 # Parameters:
 #   $host:
-#       The host kafka is running on. Defaults to 'localhost'
-#   $username
-#       Optionally specify username for connection
+#       The hostname kafka is running on
+#   $port:
+#       The port to connect on
+#   $user
+#       The user for the datadog user
 #   $password
-#       Optionally specify password for connection
-#   $port
-#       The port kafka is running on. Defaults to 9999
-#   $name
-#       Name given to kafka instance
-#   $process_name_regex
-#       Instead of specifying a host, and port. The agent can connect using the attach api.
-#   $tools_jar_path
-#       Path to tools jar needs to be set when process_name_regex is set
-#   $java_bin_path
-#       Path to java binary, should be set if agent cant find your java executable
-#   $trust_store_path
-#       Path to the trust store, should be set if ssl is enabled
-#   $trust_store_password
-#       Password to the trust store
+#       The password for the datadog user
 #   $tags
 #       Optional array of tags
-#
 #
 # Sample Usage:
 #
 #  class { 'datadog_agent::integrations::kafka' :
-#    servers => [
-#      {
-#        'host'                 => 'localhost',
-#        'username'             => 'kafka_username',
-#        'password'             => 'kafka_password',
-#        'port'                 => '9999',
-#        'name'                 => 'kafka_instance',
-#        'process_name_regex'   => '.*process_name.*',
-#        'tools_jar_path'       => '/usr/lib/jvm/java-7-openjdk-amd64/lib/tools.jar',
-#        'java_bin_path'        => '/path/to/java',
-#        'trust_store_path'     => '/path/to/trustStore.jks',
-#        'trust_store_password' => 'password',
-#        'tags'                 => ['env: test', 'sometag: someinfo'],
-#      },
-#      {
-#        'host' => 'localhost',
-#        'port' => '9999',
-#        'tags' => [],
-#      },
-#    ]
+#    host     => 'localhost',
+#    tags     => {
+#      environment => "production",
+#    },
 #  }
+#
 #
 class datadog_agent::integrations::kafka(
   $host = 'localhost',
   $port = 9999,
-  $username = undef,
+  $user = undef,
   $password = undef,
-  $process_name_regex = undef,
-  $tools_jar_path = undef,
-  $java_bin_path = undef,
-  $trust_store_path = undef,
-  $trust_store_password = undef,
-  $tags = undef,
-  $instances = undef,
+  $tags = { kafka => broker },
 ) inherits datadog_agent::params {
-  include datadog_agent
+  require ::datadog_agent
+  validate_hash($tags)
 
-  if !$instances and $host and $port {
-    $servers = [{
-      'host'                      => $host,
-      'port'                      => $port,
-      'username'                  => $username,
-      'password'                  => $password,
-      'process_name_regex'        => $process_name_regex,
-      'tools_jar_path'            => $tools_jar_path,
-      'java_bin_path'             => $java_bin_path,
-      'trust_store_path'          => $trust_store_path,
-      'trust_store_password'      => $trust_store_password,
-      'tags'                      => $tags,
-    }]
-  } elsif !$instances{
-    $servers = []
-  } else {
-    $servers = $instances
-  }
-
-  if !$::datadog_agent::agent5_enable {
+  if $::datadog_agent::agent6_enable {
     $dst = "${datadog_agent::conf6_dir}/kafka.yaml"
   } else {
     $dst = "${datadog_agent::conf_dir}/kafka.yaml"
