@@ -14,6 +14,7 @@ instances:
     tags:
 <%- @tags.each do |tag_name, tag_value| -%>
       <%= tag_name %>: <%= tag_value %>
+      environment: <%= @environment %>
 <% end -%>
 <% end -%>
 <% if @user -%>
