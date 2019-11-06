@@ -7,42 +7,38 @@
 # If you are running a version older than that, you can refer to agent 5.2.x released
 # sample files, https://raw.githubusercontent.com/DataDog/dd-agent/5.2.1/conf.d/kafka.yaml.example
 instances:
-<% @servers.each do |server| -%>
-  - host: <%= server['host'] %>
-    port: <%= server['port'] %>
-  <%- if !server['tags'].nil? && server['tags'].any? -%>
+instances:
+  - host: <%= @host %>
+    port: <%= @port %> # This is the JMX port on which Kafka exposes its metrics (usually 9999)
+<% if @tags.length > 0 -%>
     tags:
-    <%- server['tags'].each do |tag| -%>
-      - <%= tag %>
-      - environment: <%= @environment %>	  
-      - app: <%= app %>
-    <%- end -%>
-  <%- end -%>
-  <%- if !server['user'].nil? -%>
-    user: <%= server['user'] %>
-  <%- end -%>
-  <%- if !server['password'].nil? -%>
-    password: <%= server['password'] %>
-  <%- end -%>
-  <%- if !server['process_name_regex'].nil? -%>
-    process_name_regex: <%= server['process_name_regex'] %>
-  <%- end -%>
-  <%- if !server['tools_jar_path'].nil? -%>
-    tools_jar_path: <%= server['tools_jar_path'] %>
-  <%- end -%>
-  <%- if !server['name'].nil? -%>
-    name: <%= server['name'] %>
-  <%- end -%>
-  <%- if !server['java_bin_path'].nil? -%>
-    java_bin_path: <%= server['java_bin_path'] %>
-  <%- end -%>
-  <%- if !server['trust_store_path'].nil? -%>
-    trust_store_path: <%= server['trust_store_path'] %>
-  <%- end -%>
-  <%- if !server['trust_store_password'].nil? -%>
-    trust_store_password: <%= server['trust_store_password'] %>
-  <%- end -%>
+<%- @tags.each do |tag_name, tag_value| -%>
+      <%= tag_name %>: <%= tag_value %>
 <% end -%>
+<% end -%>
+<% if @user -%>
+    user: <%= @user %>
+    password: <%= @password %>
+<% end -%>
+    # process_name_regex: .*process_name.* # Instead of specifying a host, and port. The agent can connect using the attach api.
+    #                                                                       #   This requires the JDK to be installed and the path to tools.jar to be set below.
+    # tools_jar_path: /usr/lib/jvm/java-7-openjdk-amd64/lib/tools.jar # To be set when process_name_regex is set
+    # name: kafka_instance
+    # java_bin_path: /path/to/java # Optional, should be set if the agent cannot find your java executable
+    # trust_store_path: /path/to/trustStore.jks # Optional, should be set if ssl is enabled
+    # trust_store_password: password
+  # - host: remotehost
+  #   port: 9998 # Producer
+  #   tags:
+  #     kafka: producer0
+  #     env: stage
+  #     newTag: test
+  # - host: remotehost
+  #   port: 9997 # Consumer
+  #   tags:
+  #     kafka: consumer0
+  #     env: stage
+  #     newTag: test
 
 init_config:
   is_jmx: true
