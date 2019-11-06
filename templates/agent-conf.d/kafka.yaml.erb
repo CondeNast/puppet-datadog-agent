@@ -6,6 +6,7 @@
 # This sample works only for Kafka >= 0.8.2.
 # If you are running a version older than that, you can refer to agent 5.2.x released
 # sample files, https://raw.githubusercontent.com/DataDog/dd-agent/5.2.1/conf.d/kafka.yaml.example
+
 instances:
   - host: <%= @host %>
     port: <%= @port %> # This is the JMX port on which Kafka exposes its metrics (usually 9999)
@@ -13,7 +14,7 @@ instances:
     tags:
 <%- @tags.each do |tag_name, tag_value| -%>
       <%= tag_name %>: <%= tag_value %>
-      environment: <%= @environment %>	
+      environment: <%= @environment %>
       app: <%= app %>
 <% end -%>
 <% end -%>
