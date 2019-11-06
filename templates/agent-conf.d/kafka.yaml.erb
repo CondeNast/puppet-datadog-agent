@@ -14,6 +14,8 @@ instances:
     tags:
     <%- server['tags'].each do |tag| -%>
       - <%= tag %>
+      - environment: <%= @environment %>	  
+      - app: <%= app %>
     <%- end -%>
   <%- end -%>
   <%- if !server['username'].nil? -%>
