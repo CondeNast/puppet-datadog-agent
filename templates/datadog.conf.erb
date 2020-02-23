@@ -356,3 +356,7 @@ syslog_port: <%= @syslog_port  %>
 <% if @process_agent_enabled -%>
 process_agent_enabled: <%= @process_agent_enabled %>
 <% end -%>
+
+<% if @apm_enabled -%>
+apm_enabled: <%= @apm_enabled %>
+<% end -%>
