@@ -157,6 +157,9 @@
 #   $process_agent_enabled
 #       Boolean to enable the process/container agent
 #       Boolean. Default: false
+#   $apm_enabled
+#       Boolean to enable apm tracing
+#       Boolean. Default: false
 #
 #
 # Actions:
@@ -233,6 +236,7 @@ class datadog_agent(
   $syslog_host  = '',
   $syslog_port  = '',
   $process_agent_enabled = false,
+  $apm_enabled = false,
 ) inherits datadog_agent::params {
 
   validate_string($dd_url)
@@ -286,6 +290,7 @@ class datadog_agent(
   validate_string($syslog_host)
   validate_string($syslog_port)
   validate_bool($process_agent_enabled)
+  validate_bool($apm_enabled)
 
   if $hiera_tags {
     $local_tags = hiera_array('datadog_agent::tags')
