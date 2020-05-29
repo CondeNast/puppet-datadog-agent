@@ -7,6 +7,7 @@
 #       The host of the Datadog intake server to send agent data to.
 #       Defaults to https://app.datadoghq.com.
 #   $host:
+#       Force the hostname to whatever you want. (default: auto-detected)
 #   $api_key:
 #       Your DataDog API Key. Please replace with your key value.
 #   $collect_ec2_tags
@@ -160,6 +161,55 @@
 #   $apm_enabled
 #       Boolean to enable apm tracing
 #       Boolean. Default: false
+#   $apm_env
+#       String defining the environment for the APM traces
+#       String. Default: non
+#   $apm_non_local_traffic
+#       Accept non local apm traffic. Defaults to false.
+#       Boolean. Default: false
+#   $scrub_args
+#       Boolean to enable or disable the process cmdline scrubbing by the process-agent
+#       Boolean. Default: true
+#   $custom_sensitive_words
+#       Array to add more words to be used on the process cdmline scrubbing by the process-agent
+#       Array. Default: []
+#   $logs_enabled
+#       Boolean to enable or disable the logs agent
+#       Boolean. Default: false
+#   $logs_open_files_limit
+#       Integer set the max number of open files for the logs agent
+#       Integer. Default: 100 if undef
+#   $container_collect_all
+#       Boolean to enable logs collection for all containers
+#       Boolean. Default: false
+#   $apm_analyzed_spans
+#       Hash defining the APM spans to analyze and their rates.
+#       Optional Hash. Default: undef.
+#   $apm_obfuscation
+#       Hash defining obfuscation rules for sensitive data. (Agent 6 and 7 only).
+#       Optional Hash. Default: undef
+#   $datadog_site:
+#       The site of the Datadog intake to send Agent data to. Defaults to 'datadoghq.com',
+#       set to 'datadoghq.eu' to send data to the EU site.
+#       This option is only available with agent version >= 6.6.0.
+#   $cmd_port
+#       The port on which the IPC api listens
+#       Integer. Default: 5001
+#   $collect_gce_tags
+#       Collect Google Cloud Engine metadata as agent tags.
+#       Boolean. Default: false
+#   $dogstatsd_socket
+#       Specifies the socket file to be used by dogstatsd. Must have use_dogstatsd set
+#       String. Default: empty
+#   $agent_log_file
+#       Specifies the log file location (Agent 6 and 7 only).
+#       String. Default: empty
+#   $hostname_fqdn
+#       Make the agent use "hostname -f" on unix-based systems as a last resort
+#       way of determining the hostname instead of Golang "os.Hostname()"
+#       This will be enabled by default in version 6.6
+#       More information at  https://dtdg.co/flag-hostname-fqdn
+#       Optional: Valid values here are: true or false.
 #
 #
 # Actions:
@@ -237,6 +287,27 @@ class datadog_agent(
   $syslog_port  = '',
   $process_agent_enabled = false,
   $apm_enabled = false,
+  $apm_env = 'none',
+  $apm_non_local_traffic = false,
+  $scrub_args = $datadog_agent::params::process_default_scrub_args,
+  $custom_sensitive_words = $datadog_agent::params::process_default_custom_words,
+  $logs_enabled = $datadog_agent::params::logs_enabled,
+  $logs_open_files_limit = $datadog_agent::params::logs_open_files_limit,
+  $container_collect_all = $datadog_agent::params::container_collect_all,
+# Need to refactor for Puppet 3.8
+#   Optional[Hash[String, Float[0, 1]]] $apm_analyzed_spans = undef,
+#   Optional[Hash[String, Data]] $apm_obfuscation = undef,
+#   Hash[String[1], Data] $agent_extra_options = {},
+#   Optional[String] $conf_dir = undef,
+  $conf_dir_purge = $datadog_agent::params::conf_dir_purge,
+  $dd_user = $datadog_agent::params::dd_user,
+  $dd_group = $datadog_agent::params::dd_group,
+  $datadog_site = $datadog_agent::params::datadog_site,
+  $cmd_port = 5001,
+  $collect_gce_tags = false,
+  $dogstatsd_socket = '',
+  $agent_log_file = $datadog_agent::params::agent_log_file,
+  $hostname_fqdn = false,
 ) inherits datadog_agent::params {
 
   validate_string($dd_url)
@@ -291,6 +362,18 @@ class datadog_agent(
   validate_string($syslog_port)
   validate_bool($process_agent_enabled)
   validate_bool($apm_enabled)
+  validate_string($apm_env)
+  validate_bool($apm_non_local_traffic)
+  validate_bool($scrub_args)
+  validate_array($custom_sensitive_words)
+  validate_bool($logs_enabled)
+  validate_bool($container_collect_all)
+  validate_bool($conf_dir_purge)
+  validate_string($datadog_site)
+  validate_integer($cmd_port)
+  validate_bool($collect_gce_tags)
+  validate_string($agent_log_file)
+  validate_bool($hostname_fqdn)
 
   if $hiera_tags {
     $local_tags = hiera_array('datadog_agent::tags')
@@ -341,8 +424,8 @@ class datadog_agent(
   file { '/etc/dd-agent/datadog.conf':
     ensure  => file,
     content => $agent_conf_content,
-    owner   => $datadog_agent::params::dd_user,
-    group   => $datadog_agent::params::dd_group,
+    owner   => $dd_user,
+    group   => $dd_group,
     mode    => '0640',
     notify  => Service[$datadog_agent::params::service_name],
     require => File['/etc/dd-agent'],
@@ -355,4 +438,150 @@ class datadog_agent(
       hostname_extraction_regex => $hostname_extraction_regex,
     }
   }
+
+# Everything below this is to prep for Datadog 7 agent install
+
+    # lint:ignore:quoted_booleans
+    $process_enabled_str = $process_enabled ? { true => 'true' , default => 'disabled' }
+    # lint:endignore
+    $base_extra_config = {
+        'apm_config' => {
+          'enabled'               => $apm_enabled,
+          'env'                   => $apm_env,
+          'apm_non_local_traffic' => $apm_non_local_traffic
+        },
+        'process_config' => {
+          'enabled' => $process_enabled_str,
+          'scrub_args' => $scrub_args,
+          'custom_sensitive_words' => $custom_sensitive_words,
+        },
+        'logs_enabled' => $logs_enabled,
+    }
+    if $logs_open_files_limit {
+      $logs_base_config = {
+        'logs_config' => {
+          'container_collect_all' => $container_collect_all,
+          'open_files_limit' => $logs_open_files_limit
+        },
+      }
+    } else {
+      $logs_base_config = {
+        'logs_config' => {
+          'container_collect_all' => $container_collect_all,
+        },
+      }
+    }
+    if $host != '' {
+        $host_config = {
+          'hostname' => $host,
+        }
+    } else {
+        $host_config = {}
+    }
+
+    if $apm_analyzed_spans {
+        $apm_analyzed_span_config = {
+            'apm_config' => {
+                'analyzed_spans' => $apm_analyzed_spans
+            }
+        }
+    } else {
+        $apm_analyzed_span_config = {}
+    }
+
+    if $apm_obfuscation {
+        $apm_obfuscation_config = {
+          'apm_config' => {
+            'obfuscation' => $apm_obfuscation
+          }
+        }
+    } else {
+        $apm_obfuscation_config = {}
+    }
+
+    if $statsd_forward_host != '' {
+      if $statsd_forward_port != '' {
+        $statsd_forward_config = {
+          'statsd_forward_host' => $statsd_forward_host,
+          'statsd_forward_port' => $statsd_forward_port,
+        }
+      } else {
+          $statsd_forward_config = {
+            'statsd_forward_host' => $statsd_forward_host,
+          }
+      }
+    } else {
+        $statsd_forward_config = {}
+    }
+
+    if $additional_checksd {
+        $additional_checksd_config = {
+          'additional_checksd' => $additional_checksd,
+        }
+    } else {
+        $additional_checksd_config = {}
+    }
+
+    $extra_config = deep_merge(
+            $base_extra_config,
+            $logs_base_config,
+            $agent_extra_options,
+            $apm_analyzed_span_config,
+            $apm_obfuscation_config,
+            $statsd_forward_config,
+            $host_config,
+            $additional_checksd_config)
+
+    if $conf_dir == undef {
+      if $_agent_major_version == 5 {
+        $_conf_dir = $datadog_agent::params::legacy_conf_dir
+      } else {
+        $_conf_dir = $datadog_agent::params::conf_dir
+      }
+    } else {
+      $_conf_dir = $conf_dir
+    }
+
+    file { $_conf_dir:
+      ensure  => directory,
+      purge   => $conf_dir_purge,
+      recurse => true,
+      force   => $conf_dir_purge,
+      owner   => $dd_user,
+      group   => $dd_group,
+      notify  => Service[$datadog_agent::params::service_name]
+    }
+
+    $_local_tags = datadog_agent::tag6($local_tags, false)
+    $_facts_tags = datadog_agent::tag6($facts_to_tags, true)
+
+    $_agent_config = {
+      'api_key' => $api_key,
+      'dd_url' => $dd_url,
+      'site' => $datadog_site,
+      'cmd_port' => $cmd_port,
+      'hostname_fqdn' => $hostname_fqdn,
+      'collect_ec2_tags' => $collect_ec2_tags,
+      'collect_gce_tags' => $collect_gce_tags,
+      'confd_path' => $_conf_dir,
+      'enable_metadata_collection' => $collect_instance_metadata,
+      'dogstatsd_port' => $dogstatsd_port,
+      'dogstatsd_socket' => $dogstatsd_socket,
+      'dogstatsd_non_local_traffic' => $non_local_traffic,
+      'log_file' => $agent_log_file,
+      'log_level' => $log_level,
+      'tags' => unique(flatten(union($_local_tags, $_facts_tags))),
+    }
+
+    $agent_config = deep_merge($_agent_config, $extra_config)
+
+    file { '/etc/datadog-agent/datadog.yaml':
+      owner   => $dd_user,
+      group   => $dd_group,
+      mode    => '0640',
+      content => template('datadog_agent/datadog-agent.yaml.erb'),
+      notify  => Service[$datadog_agent::params::service_name],
+      require => File['/etc/datadog-agent'],
+    }
+
 }
