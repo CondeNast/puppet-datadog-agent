@@ -552,8 +552,8 @@ class datadog_agent(
       notify  => Service[$datadog_agent::params::service_name]
     }
 
-    $_local_tags = datadog_agent::tag6($local_tags, false)
-    $_facts_tags = datadog_agent::tag6($facts_to_tags, true)
+#    $_local_tags = datadog_agent::tag6($local_tags, false)
+#    $_facts_tags = datadog_agent::tag6($facts_to_tags, true)
 
     $_agent_config = {
       'api_key' => $api_key,
