@@ -452,9 +452,8 @@ class datadog_agent(
 
   # Declare service
   class { 'datadog_agent::service' :
-    service_ensure   => $service_ensure,
-    service_enable   => $service_enable,
-#    service_provider => $service_provider,
+    service_ensure => $service_ensure,
+    service_enable => $service_enable,
   }
 
     # lint:ignore:quoted_booleans

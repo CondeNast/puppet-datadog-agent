@@ -50,7 +50,7 @@ class datadog_agent::redhat(
         group  => root,
         mode   => '0600',
         path   => $public_key_local,
-        source => 'https://yum.datadoghq.com/DATADOG_RPM_KEY_E09422B3.public'
+        source => 'http://yum.datadoghq.com/DATADOG_RPM_KEY_E09422B3.public'
     }
 
     exec { 'install-gpg-key':
