@@ -441,6 +441,13 @@ class datadog_agent(
 
 # Everything below this is to prep for Datadog 7 agent install
 
+  # Declare service
+  class { 'datadog_agent::service' :
+    service_ensure   => $service_ensure,
+    service_enable   => $service_enable,
+    service_provider => $service_provider,
+  }
+
     # lint:ignore:quoted_booleans
     $process_enabled_str = $process_enabled ? { true => 'true' , default => 'disabled' }
     # lint:endignore
