@@ -411,6 +411,15 @@ class datadog_agent(
     require => Package['datadog-agent'],
   }
 
+  # required by reports even in agent5 scenario
+  file { '/etc/datadog-agent':
+    ensure  => directory,
+    owner   => $dd_user,
+    group   => $dd_group,
+    mode    => $datadog_agent::params::permissions_directory,
+    require => Package[$datadog_agent::params::package_name],
+  }
+
   # main agent config file
   # content
   if ($extra_template != '') {
