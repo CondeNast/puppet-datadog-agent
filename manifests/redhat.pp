@@ -45,9 +45,9 @@ class datadog_agent::redhat(
 
     $public_key_local = '/etc/pki/rpm-gpg/DATADOG_RPM_KEY.public'
 
-    remote_file { "${public_key_local}":
-      ensure => present,
-      source => 'https://yum.datadoghq.com/DATADOG_RPM_KEY_E09422B3.public',
+    exec { 'get gpg key':
+      command => "/bin/curl -o ${public_key_local} https://yum.datadoghq.com/DATADOG_RPM_KEY_E09422B3.public",
+      creates => "${public_key_local}",
     }
 
 #    file { 'DATADOG_RPM_KEY_E09422B3.public':
@@ -58,12 +58,12 @@ class datadog_agent::redhat(
 #        source => 'http://yum.datadoghq.com/DATADOG_RPM_KEY_E09422B3.public'
 #    }
 
-exec { 'validate gpg key':
-  path      => '/bin:/usr/bin:/sbin:/usr/sbin',
-  command   => "gpg --keyid-format 0xLONG ${public_key_local} | grep -q 7F438280EF8D349F",
-  require   => Remote_file["${public_key_local}"],
-  logoutput => 'on_failure',
-}
+    exec { 'validate gpg key':
+      path      => '/bin:/usr/bin:/sbin:/usr/sbin',
+      command   => "gpg --keyid-format 0xLONG ${public_key_local} | grep -q 7F438280EF8D349F",
+      require   => Exec['get gpg key'],
+      logoutput => 'on_failure',
+    }
 
     exec { 'install-gpg-key':
         command => "/bin/rpm --import ${public_key_local}",
