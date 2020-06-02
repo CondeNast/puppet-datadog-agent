@@ -621,6 +621,6 @@ class datadog_agent(
     }
   }
 
-  create_resources('datadog_agent::integration', $local_integrations)
+#  create_resources('datadog_agent::integration', $local_integrations)
 
 }
