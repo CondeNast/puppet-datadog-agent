@@ -390,6 +390,10 @@ class datadog_agent(
     $_agent_major_version = $agent_major_version
   }
 
+  if $_agent_major_version != 5 and $_agent_major_version != 6 and $_agent_major_version != 7 {
+    fail('agent_major_version must be either 5, 6 or 7')
+  }
+
   if $hiera_tags {
     $local_tags = hiera_array('datadog_agent::tags')
   } else {
@@ -408,14 +412,13 @@ class datadog_agent(
     default:    { $_loglevel = 'INFO' }
   }
 
-  case $::operatingsystem {
-    'Ubuntu','Debian' : { include datadog_agent::ubuntu }
-    'RedHat','CentOS','Fedora','Amazon','Scientific' : {
-      class { 'datadog_agent::redhat':
-        manage_repo => $manage_repo,
-      }
+  if $manage_install {
+    class { 'datadog_agent::redhat':
+      agent_major_version => $_agent_major_version,
+      agent_repo_uri      => $agent_repo_uri,
+      manage_repo         => $manage_repo,
+      agent_version       => $agent_version,
     }
-    default: { fail("Class[datadog_agent]: Unsupported operatingsystem: ${::operatingsystem}") }
   }
 
   file { '/etc/dd-agent':
