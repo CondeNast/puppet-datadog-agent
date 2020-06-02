@@ -309,6 +309,7 @@ class datadog_agent(
   $agent_log_file = $datadog_agent::params::agent_log_file,
   $hostname_fqdn = false,
   $agent_major_version = $datadog_agent::params::default_agent_major_version,
+  $manage_install = true,
 ) inherits datadog_agent::params {
 
   validate_string($dd_url)
@@ -376,6 +377,7 @@ class datadog_agent(
   validate_string($agent_log_file)
   validate_bool($hostname_fqdn)
   validate_integer($agent_major_version)
+  validate_bool($manage_install)
 
   notify {"Running with \$agent_major_version set to ${agent_major_version}, and \$agent_version set to ${agent_version}":}
 
