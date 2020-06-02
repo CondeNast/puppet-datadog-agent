@@ -379,7 +379,7 @@ class datadog_agent(
 
   #In this regex, version '1:6.15.0~rc.1-1' would match as $1='1:', $2='6', $3='15', $4='0', $5='~rc.1', $6='1'
 
-  notify {"Running with \$agent_major_version set to $agent_major_version", and \$agent_version set to $agent_version.}
+  notify {"Running with \$agent_major_version set to $agent_major_version, and \$agent_version set to $agent_version":}
 
   if $agent_version != 'latest' and $agent_version =~ /([0-9]+:)?([0-9]+)\.([0-9]+)\.([0-9]+)((?:~|-)[^0-9\s-]+[^-\s]*)?(?:-([0-9]+))?/ {
     $_agent_major_version = 0 + $2 # Cast to integer
