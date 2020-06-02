@@ -383,10 +383,8 @@ class datadog_agent(
     if $agent_major_version != undef and $agent_major_version != $_agent_major_version {
       fail('Provided and deduced agent_major_version don\'t match')
     }
-  } elsif $agent_major_version != undef {
-    $_agent_major_version = $agent_major_version
   } else {
-    $_agent_major_version = $datadog_agent::params::default_agent_major_version
+    $_agent_major_version = $agent_major_version
   }
 
   if $hiera_tags {
