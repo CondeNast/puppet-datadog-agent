@@ -377,10 +377,9 @@ class datadog_agent(
   validate_bool($hostname_fqdn)
   validate_integer($agent_major_version)
 
+  notify {"Running with \$agent_major_version set to ${agent_major_version}, and \$agent_version set to ${agent_version}":}
+
   #In this regex, version '1:6.15.0~rc.1-1' would match as $1='1:', $2='6', $3='15', $4='0', $5='~rc.1', $6='1'
-
-  notify {"Running with \$agent_major_version set to $agent_major_version, and \$agent_version set to $agent_version":}
-
   if $agent_version != 'latest' and $agent_version =~ /([0-9]+:)?([0-9]+)\.([0-9]+)\.([0-9]+)((?:~|-)[^0-9\s-]+[^-\s]*)?(?:-([0-9]+))?/ {
     $_agent_major_version = 0 + $2 # Cast to integer
     if $agent_major_version != undef and $agent_major_version != $_agent_major_version {
@@ -392,6 +391,33 @@ class datadog_agent(
 
   if $_agent_major_version != 5 and $_agent_major_version != 6 and $_agent_major_version != 7 {
     fail('agent_major_version must be either 5, 6 or 7')
+  }
+
+  # Allow ports to be passed as integers or strings.
+  # lint:ignore:only_variable_string
+  $_dogstatsd_port = "${dogstatsd_port}"
+  $_statsd_forward_port = "${statsd_forward_port}"
+  $_graphite_listen_port = "${graphite_listen_port}"
+  $_listen_port = "${listen_port}"
+  $_pup_port = "${pup_port}"
+  $_syslog_port = "${syslog_port}"
+  # lint:endignore
+
+  validate_legacy(String, 'validate_re', $_dogstatsd_port, '^\d*$')
+  validate_legacy(String, 'validate_re', $_statsd_forward_port, '^\d*$')
+  validate_legacy(String, 'validate_re', $_graphite_listen_port, '^\d*$')
+  validate_legacy(String, 'validate_re', $_listen_port, '^\d*$')
+  validate_legacy(String, 'validate_re', $_pup_port, '^\d*$')
+  validate_legacy(String, 'validate_re', $_syslog_port, '^\d*$')
+
+  if $conf_dir == undef {
+    if $_agent_major_version == 5 {
+      $_conf_dir = $datadog_agent::params::legacy_conf_dir
+    } else {
+      $_conf_dir = $datadog_agent::params::conf_dir
+    }
+  } else {
+    $_conf_dir = $conf_dir
   }
 
   if $hiera_tags {
@@ -412,6 +438,7 @@ class datadog_agent(
     default:    { $_loglevel = 'INFO' }
   }
 
+  # Install agent
   if $manage_install {
     class { 'datadog_agent::redhat':
       agent_major_version => $_agent_major_version,
@@ -421,12 +448,10 @@ class datadog_agent(
     }
   }
 
-  file { '/etc/dd-agent':
-    ensure  => directory,
-    owner   => 'root',
-    group   => 'root',
-    mode    => '0755',
-    require => Package[$datadog_agent::params::package_name],
+  # Declare service
+  class { 'datadog_agent::service' :
+    service_ensure => $service_ensure,
+    service_enable => $service_enable,
   }
 
   # required by reports even in agent5 scenario
@@ -435,43 +460,41 @@ class datadog_agent(
     owner   => $dd_user,
     group   => $dd_group,
     mode    => $datadog_agent::params::permissions_directory,
+    require => Package[$datadog_agent::params::package_name],
   }
 
-  # main agent config file
-  # content
-  if ($extra_template != '') {
-    $agent_conf_content = template(
-      'datadog_agent/datadog.conf.erb',
-      $extra_template
-    )
-  } else {
-    $agent_conf_content = template('datadog_agent/datadog.conf.erb')
-  }
-  file { '/etc/dd-agent/datadog.conf':
-    ensure  => file,
-    content => $agent_conf_content,
-    owner   => $dd_user,
-    group   => $dd_group,
-    mode    => '0640',
-    notify  => Service[$datadog_agent::params::service_name],
-    require => File['/etc/dd-agent'],
-  }
+  if $_agent_major_version == 5 {
 
-  if $puppet_run_reports {
-    class { 'datadog_agent::reports':
-      api_key                   => $api_key,
-      puppetmaster_user         => $puppetmaster_user,
-      hostname_extraction_regex => $hostname_extraction_regex,
+    file { '/etc/dd-agent':
+      ensure  => directory,
+      owner   => 'root',
+      group   => 'root',
+      mode    => '0755',
+      require => Package[$datadog_agent::params::package_name],
     }
-  }
 
-# Everything below this is to prep for Datadog 7 agent install
+    # main agent config file
+    # content
+    if ($extra_template != '') {
+      $agent_conf_content = template(
+        'datadog_agent/datadog.conf.erb',
+        $extra_template
+      )
+    } else {
+      $agent_conf_content = template('datadog_agent/datadog.conf.erb')
+    }
 
-  # Declare service
-  class { 'datadog_agent::service' :
-    service_ensure => $service_ensure,
-    service_enable => $service_enable,
-  }
+    file { '/etc/dd-agent/datadog.conf':
+      ensure  => file,
+      content => $agent_conf_content,
+      owner   => $dd_user,
+      group   => $dd_group,
+      mode    => '0640',
+      notify  => Service[$datadog_agent::params::service_name],
+      require => File['/etc/dd-agent'],
+    }
+
+  } else { #Agent 6/7
 
     # lint:ignore:quoted_booleans
     $process_enabled_str = $process_enabled ? { true => 'true' , default => 'disabled' }
@@ -615,5 +638,20 @@ class datadog_agent(
       notify  => Service[$datadog_agent::params::service_name],
       require => File['/etc/datadog-agent'],
     }
+  }
+
+  if $puppet_run_reports {
+    class { 'datadog_agent::reports':
+      api_key                   => $api_key,
+      datadog_site              => $datadog_site,
+      manage_dogapi_gem         => $manage_dogapi_gem,
+      puppet_gem_provider       => $puppet_gem_provider,
+      dogapi_version            => $datadog_agent::params::dogapi_version,
+      puppetmaster_user         => $puppetmaster_user,
+      hostname_extraction_regex => $hostname_extraction_regex,
+    }
+  }
+
+  create_resources('datadog_agent::integration', $local_integrations)
 
 }
