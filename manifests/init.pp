@@ -422,11 +422,11 @@ class datadog_agent(
   }
 
   file { '/etc/dd-agent':
-    ensure  => present,
+    ensure  => directory,
     owner   => 'root',
     group   => 'root',
     mode    => '0755',
-    require => Package['datadog-agent'],
+    require => Package[$datadog_agent::params::package_name],
   }
 
   # required by reports even in agent5 scenario
@@ -435,7 +435,6 @@ class datadog_agent(
     owner   => $dd_user,
     group   => $dd_group,
     mode    => $datadog_agent::params::permissions_directory,
-    require => Package[$datadog_agent::params::package_name],
   }
 
   # main agent config file
