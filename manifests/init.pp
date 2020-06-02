@@ -298,7 +298,7 @@ class datadog_agent(
 #   Optional[Hash[String, Float[0, 1]]] $apm_analyzed_spans = undef,
 #   Optional[Hash[String, Data]] $apm_obfuscation = undef,
 #   Hash[String[1], Data] $agent_extra_options = {},
-#   Optional[String] $conf_dir = undef,
+  $conf_dir = $datadog_agent::params::conf_dir,
   $conf_dir_purge = $datadog_agent::params::conf_dir_purge,
   $dd_user = $datadog_agent::params::dd_user,
   $dd_group = $datadog_agent::params::dd_group,
@@ -393,14 +393,10 @@ class datadog_agent(
     fail('agent_major_version must be either 5, 6 or 7')
   }
 
-  if $conf_dir == undef {
-    if $_agent_major_version == 5 {
-      $_conf_dir = $datadog_agent::params::legacy_conf_dir
-    } else {
-      $_conf_dir = $datadog_agent::params::conf_dir
-    }
+  if $_agent_major_version == 5 {
+    $_conf_dir = $datadog_agent::params::legacy_conf_dir
   } else {
-    $_conf_dir = $conf_dir
+    $_conf_dir = $datadog_agent::params::conf_dir
   }
 
   if $hiera_tags {
