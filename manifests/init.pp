@@ -308,6 +308,7 @@ class datadog_agent(
   $dogstatsd_socket = '',
   $agent_log_file = $datadog_agent::params::agent_log_file,
   $hostname_fqdn = false,
+  $agent_major_version = $datadog_agent::params::default_agent_major_version,
 ) inherits datadog_agent::params {
 
   validate_string($dd_url)
@@ -374,6 +375,7 @@ class datadog_agent(
   validate_bool($collect_gce_tags)
   validate_string($agent_log_file)
   validate_bool($hostname_fqdn)
+  validate_integer($agent_major_version)
 
   #In this regex, version '1:6.15.0~rc.1-1' would match as $1='1:', $2='6', $3='15', $4='0', $5='~rc.1', $6='1'
   if $agent_version != 'latest' and $agent_version =~ /([0-9]+:)?([0-9]+)\.([0-9]+)\.([0-9]+)((?:~|-)[^0-9\s-]+[^-\s]*)?(?:-([0-9]+))?/ {
