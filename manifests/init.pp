@@ -393,23 +393,6 @@ class datadog_agent(
     fail('agent_major_version must be either 5, 6 or 7')
   }
 
-  # Allow ports to be passed as integers or strings.
-  # lint:ignore:only_variable_string
-  $_dogstatsd_port = "${dogstatsd_port}"
-  $_statsd_forward_port = "${statsd_forward_port}"
-  $_graphite_listen_port = "${graphite_listen_port}"
-  $_listen_port = "${listen_port}"
-  $_pup_port = "${pup_port}"
-  $_syslog_port = "${syslog_port}"
-  # lint:endignore
-
-  validate_legacy(String, 'validate_re', $_dogstatsd_port, '^\d*$')
-  validate_legacy(String, 'validate_re', $_statsd_forward_port, '^\d*$')
-  validate_legacy(String, 'validate_re', $_graphite_listen_port, '^\d*$')
-  validate_legacy(String, 'validate_re', $_listen_port, '^\d*$')
-  validate_legacy(String, 'validate_re', $_pup_port, '^\d*$')
-  validate_legacy(String, 'validate_re', $_syslog_port, '^\d*$')
-
   if $conf_dir == undef {
     if $_agent_major_version == 5 {
       $_conf_dir = $datadog_agent::params::legacy_conf_dir
