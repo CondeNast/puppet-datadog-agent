@@ -210,6 +210,9 @@
 #       This will be enabled by default in version 6.6
 #       More information at  https://dtdg.co/flag-hostname-fqdn
 #       Optional: Valid values here are: true or false.
+#   $manage_install
+#       Boolean to indicate whether this module should attempt to install the
+#       Agent, or assume it will be installed by other means. Default true.
 #
 #
 # Actions:
@@ -423,7 +426,6 @@ class datadog_agent(
   if $manage_install {
     class { 'datadog_agent::redhat':
       agent_major_version => $_agent_major_version,
-      agent_repo_uri      => $agent_repo_uri,
       manage_repo         => $manage_repo,
       agent_version       => $agent_version,
     }
