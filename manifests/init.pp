@@ -566,16 +566,6 @@ class datadog_agent(
             $host_config,
             $additional_checksd_config)
 
-    if $conf_dir == undef {
-      if $_agent_major_version == 5 {
-        $_conf_dir = $datadog_agent::params::legacy_conf_dir
-      } else {
-        $_conf_dir = $datadog_agent::params::conf_dir
-      }
-    } else {
-      $_conf_dir = $conf_dir
-    }
-
     file { $_conf_dir:
       ensure  => directory,
       purge   => $conf_dir_purge,
