@@ -58,18 +58,18 @@ class datadog_agent::redhat(
 #        source => 'http://yum.datadoghq.com/DATADOG_RPM_KEY_E09422B3.public'
 #    }
 
-    exec { 'validate gpg key':
-      path      => '/bin:/usr/bin:/sbin:/usr/sbin',
-      command   => "gpg --keyid-format 0xLONG ${public_key_local} | grep -q 7F438280EF8D349F",
-      require   => Exec['get gpg key'],
-      logoutput => 'on_failure',
-    }
+#    exec { 'validate gpg key':
+#      path      => '/bin:/usr/bin:/sbin:/usr/sbin',
+#      command   => "gpg --keyid-format 0xLONG ${public_key_local} | grep -q 7F438280EF8D349F",
+#      require   => Exec['get gpg key'],
+#      logoutput => 'on_failure',
+#    }
 
     exec { 'install-gpg-key':
         command => "/bin/rpm --import ${public_key_local}",
         onlyif  => "/usr/bin/gpg --dry-run --quiet --with-fingerprint -n ${public_key_local} | grep 'A4C0 B90D 7443 CF6E 4E8A  A341 F106 8E14 E094 22B3' || gpg --dry-run --import --import-options import-show ${public_key_local} | grep 'A4C0B90D7443CF6E4E8AA341F1068E14E09422B3'",
         unless  => '/bin/rpm -q gpg-pubkey-e09422b3',
-        require => Exec['validate gpg key'],
+        require => Exec['get gpg key'],
     }
 
     yumrepo { 'datadog-beta':
