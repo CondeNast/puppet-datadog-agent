@@ -81,7 +81,7 @@ class datadog_agent::integrations::mongo(
 
   validate_array($servers)
 
-  file { "${datadog_agent::params::conf_dir}/mongo.yaml":
+  file { $dst:
     ensure  => file,
     owner   => $datadog_agent::params::dd_user,
     group   => $datadog_agent::params::dd_group,
