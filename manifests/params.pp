@@ -19,7 +19,8 @@ class datadog_agent::params {
 #  $dd_group       = 'root'
 
 # Used for legacy storm integration
-  $checks_dir     = '/etc/dd-agent/checks.d'
+  $legacy_checks_dir     = '/etc/dd-agent/checks.d'
+  $checks_dir     = '/etc/datadog-agent/checks.d'
 
   $datadog_site                   = 'datadoghq.com'
   $dd_groups                      = undef

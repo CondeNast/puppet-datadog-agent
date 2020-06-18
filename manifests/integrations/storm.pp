@@ -13,10 +13,10 @@ class datadog_agent::integrations::storm(
 ) inherits datadog_agent::params {
   include datadog_agent
 
-  $legacy_dst = "${datadog_agent::params::legacy_conf_dir}/storm.yaml"
+  $legacy_dst_yaml = "${datadog_agent::params::legacy_conf_dir}/storm.yaml"
   if $::datadog_agent::_agent_major_version > 5 {
     $dst_dir = "${datadog_agent::params::conf_dir}/storm.d"
-    file { $legacy_dst:
+    file { $legacy_dst_yaml:
       ensure => 'absent'
     }
 
@@ -28,12 +28,14 @@ class datadog_agent::integrations::storm(
       require => Package[$datadog_agent::params::package_name],
       notify  => Service[$datadog_agent::params::service_name]
     }
-    $dst = "${dst_dir}/conf.yaml"
+    $dst_yaml = "${dst_dir}/conf.yaml"
+    $dst_check = ${datadog_agent::params::checks_dir}/storm.py
   } else {
-    $dst = $legacy_dst
+    $dst_yaml = $legacy_dst_yaml
+    $dst_check = ${datadog_agent::params::legacy_checks_dir}/storm.py
   }
 
-  file { "${datadog_agent::params::checks_dir}/storm.py":
+  file { "$dst_check":
     ensure  => file,
     owner   => $datadog_agent::params::dd_user,
     group   => $datadog_agent::params::dd_group,
@@ -43,7 +45,7 @@ class datadog_agent::integrations::storm(
     notify  => Service[$datadog_agent::params::service_name],
   }
 
-  file { $dst:
+  file { $dst_yaml:
     ensure  => file,
     owner   => $datadog_agent::params::dd_user,
     group   => $datadog_agent::params::dd_group,
