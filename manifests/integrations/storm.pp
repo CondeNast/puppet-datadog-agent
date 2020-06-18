@@ -8,8 +8,8 @@
 
 
 class datadog_agent::integrations::storm(
-  $server                       = "http://localhost:8080",
-  $environment			= $::environment,
+  $server      = 'http://localhost:8080',
+  $environment = $::environment,
 ) inherits datadog_agent::params {
   include datadog_agent
 
@@ -38,7 +38,7 @@ class datadog_agent::integrations::storm(
     owner   => $datadog_agent::params::dd_user,
     group   => $datadog_agent::params::dd_group,
     mode    => $datadog_agent::params::permissions_protected_file,
-    source  => "puppet:///modules/datadog_agent/checks.d/storm.py",
+    source  => 'puppet:///modules/datadog_agent/checks.d/storm.py',
     require => Package[$datadog_agent::params::package_name],
     notify  => Service[$datadog_agent::params::service_name],
   }
