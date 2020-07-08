@@ -31,10 +31,10 @@ class datadog_agent::integrations::storm(
       notify  => Service[$datadog_agent::params::service_name]
     }
     $dst_yaml = "${dst_dir}/conf.yaml"
-    $dst_check = ${datadog_agent::params::checks_dir}/storm.py
+    $dst_check = "${datadog_agent::params::checks_dir}/storm.py"
   } else {
-    $dst_yaml = $legacy_dst_yaml
-    $dst_check = ${datadog_agent::params::legacy_checks_dir}/storm.py
+    $dst_yaml = "$legacy_dst_yaml"
+    $dst_check = "${datadog_agent::params::legacy_checks_dir}/storm.py"
   }
 
   file { "$dst_check":
