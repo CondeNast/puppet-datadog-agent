@@ -13,6 +13,8 @@ class datadog_agent::integrations::storm(
 ) inherits datadog_agent::params {
   include datadog_agent
 
+  notify {"Running DataDog Storm integration with \$agent_major_version set to ${agent_major_version}, \$_agent_major_version set to ${_agent_major_version} and \$agent_version set to ${agent_version}":}
+
   $legacy_dst_yaml = "${datadog_agent::params::legacy_conf_dir}/storm.yaml"
   if $::datadog_agent::_agent_major_version > 5 {
     $dst_dir = "${datadog_agent::params::conf_dir}/storm.d"
